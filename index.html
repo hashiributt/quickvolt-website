@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QuickVolt: Know Before You Drive There</title>
+<meta name="description" content="QuickVolt shows live EV charger availability, filters by your car, and notifies you the moment a full station frees up.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --dark: #0F1A14;
+    --dark-card: #192118;
+    --dark-border: #2A362A;
+    --green: #1F5C3F;
+    --green-bright: #3E8A64;
+    --cream: #FAF9F5;
+    --cream-card: #FFFFFF;
+    --border: #E5E1D3;
+    --copper: #B5651D;
+    --text-dark: #1A1A18;
+    --text-muted: #5C5A4E;
+    --text-light: #F2F1EA;
+    --text-light-muted: #9FB5A8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    color: var(--text-dark);
+    background: var(--dark);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  h1, h2, h3, .headline-font {
+    font-family: 'Space Grotesk', sans-serif;
+    letter-spacing: -0.01em;
+    font-weight: 700;
+  }
+  a { text-decoration: none; color: inherit; }
+  img { max-width: 100%; display: block; }
+  button { font-family: inherit; cursor: pointer; border: none; background: none; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: rgba(15, 26, 20, 0.92);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--dark-border);
+  }
+  nav .wrap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-light);
+    font-weight: 600;
+    font-size: 18px;
+  }
+  .logo .bolt-badge {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: var(--green);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .nav-cta {
+    background: var(--green);
+    color: var(--text-light);
+    padding: 9px 18px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+  }
+  .menu-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: var(--dark-card);
+    border: 1px solid var(--dark-border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+  .menu-btn span {
+    width: 18px;
+    height: 2px;
+    background: var(--text-light);
+    border-radius: 2px;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+  }
+  .menu-btn.open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+  .menu-btn.open span:nth-child(2) { opacity: 0; }
+  .menu-btn.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+  .menu-dropdown {
+    position: absolute;
+    top: 52px;
+    right: 0;
+    width: 200px;
+    background: var(--dark-card);
+    border: 1px solid var(--dark-border);
+    border-radius: 12px;
+    padding: 8px;
+    box-shadow: 0 20px 40px -10px rgba(0,0,0,0.5);
+    display: none;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .menu-dropdown.open {
+    display: flex;
+    animation: dropdownIn 0.2s ease;
+  }
+  @keyframes dropdownIn {
+    from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .menu-item {
+    color: var(--text-light-muted);
+    font-size: 15px;
+    font-weight: 500;
+    padding: 12px 14px;
+    border-radius: 8px;
+    text-align: left;
+    width: 100%;
+  }
+  .menu-item.active {
+    color: var(--text-light);
+    background: var(--green);
+  }
+  .menu-item:not(.active):hover {
+    background: rgba(255,255,255,0.05);
+  }
+
+  .panel { display: none; }
+  .panel.active {
+    display: block;
+    animation: panelIn 0.35s ease;
+  }
+  @keyframes panelIn {
+    from { opacity: 0; transform: translateY(10px) scale(0.99); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .hero {
+    background: radial-gradient(ellipse 900px 500px at 50% -10%, #1a3d2c 0%, var(--dark) 55%);
+    padding: 88px 24px 40px;
+    text-align: center;
+  }
+  .hero h1 {
+    font-size: 52px;
+    line-height: 1.1;
+    color: var(--text-light);
+    font-weight: 700;
+    min-height: 1.2em;
+  }
+  .cursor {
+    display: inline-block;
+    width: 4px;
+    background: var(--green-bright);
+    margin-left: 4px;
+    animation: blink 0.9s steps(1) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+  .hero p.lede {
+    margin: 20px auto 0;
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--text-light-muted);
+    max-width: 46ch;
+  }
+  .hero-actions {
+    margin-top: 32px;
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .btn-primary {
+    background: var(--green);
+    color: var(--text-light);
+    padding: 14px 26px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 15px;
+    display: inline-block;
+    transition: transform 0.15s ease;
+  }
+  .btn-primary:active { transform: scale(0.97); }
+  .btn-ghost {
+    color: var(--text-light-muted);
+    font-size: 14px;
+    padding: 14px 4px;
+  }
+
+  .gallery-section {
+    padding: 64px 0 100px;
+    animation: gallerySlideIn 0.8s ease 0.2s both;
+  }
+  @keyframes gallerySlideIn {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .gallery-strip {
+    display: flex;
+    gap: 20px;
+    overflow-x: auto;
+    padding: 0 24px 16px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+  .gallery-strip::-webkit-scrollbar { height: 6px; }
+  .gallery-strip::-webkit-scrollbar-thumb { background: var(--dark-border); border-radius: 3px; }
+  .gallery-strip img {
+    height: 480px;
+    width: auto;
+    border-radius: 20px;
+    scroll-snap-align: center;
+    flex-shrink: 0;
+    cursor: zoom-in;
+    transition: transform 0.25s ease;
+    border: 1px solid var(--dark-border);
+  }
+  .gallery-strip img:hover { transform: translateY(-6px); }
+
+  .lightbox {
+    position: fixed;
+    inset: 0;
+    background: rgba(6, 10, 8, 0.88);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 40px 24px;
+  }
+  .lightbox.open {
+    display: flex;
+    animation: lightboxIn 0.25s ease;
+  }
+  @keyframes lightboxIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  .lightbox img {
+    max-height: 88vh;
+    border-radius: 20px;
+    animation: lightboxImgIn 0.3s cubic-bezier(0.2, 0.8, 0.3, 1.1);
+  }
+  @keyframes lightboxImgIn {
+    from { opacity: 0; transform: scale(0.92); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  .lightbox-close {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    color: var(--text-light);
+    font-size: 28px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--dark-card);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .content-section {
+    background: var(--cream);
+    color: var(--text-dark);
+    min-height: calc(100vh - 64px);
+    padding: 96px 24px;
+  }
+  .content-inner { max-width: 720px; margin: 0 auto; }
+  .content-inner h2 {
+    font-size: 38px;
+    font-weight: 700;
+    margin-bottom: 28px;
+    line-height: 1.15;
+  }
+  .content-inner p {
+    font-size: 17px;
+    line-height: 1.7;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+    max-width: 62ch;
+  }
+  .content-inner strong { color: var(--text-dark); }
+
+  .why-point {
+    display: flex;
+    gap: 20px;
+    padding: 28px 0;
+    border-top: 1px solid var(--border);
+  }
+  .why-point:last-child { border-bottom: 1px solid var(--border); }
+  .why-mark {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--copper);
+    margin-top: 10px;
+    flex-shrink: 0;
+  }
+  .why-point h3 {
+    font-size: 19px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .why-point p { margin-bottom: 0; }
+
+  .contact-card {
+    background: var(--cream-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    margin-top: 28px;
+  }
+  .contact-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 0;
+  }
+  .contact-row + .contact-row { border-top: 1px solid var(--border); }
+  .contact-label { font-weight: 600; font-size: 15px; }
+  .contact-value { color: var(--green); font-size: 15px; }
+
+  footer {
+    background: var(--dark);
+    border-top: 1px solid var(--dark-border);
+    padding: 32px 24px;
+  }
+  footer .wrap {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .footer-links { display: flex; gap: 24px; }
+  .footer-links a { color: var(--text-light-muted); font-size: 14px; }
+
+  @media (max-width: 720px) {
+    .hero h1 { font-size: 34px; }
+    .hero { padding: 72px 24px 32px; }
+    .gallery-strip img { height: 360px; }
+    .content-inner h2 { font-size: 28px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <div class="logo">
+      <div class="bolt-badge">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="#FAF9F5"/></svg>
+      </div>
+    </div>
+    <div class="nav-right">
+      <a href="#" class="nav-cta">Get The App</a>
+      <button class="menu-btn" id="menuBtn" aria-label="Open navigation menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="menu-dropdown" id="menuDropdown">
+        <button class="menu-item active" data-tab="home">Home</button>
+        <button class="menu-item" data-tab="why">Why</button>
+        <button class="menu-item" data-tab="about">About</button>
+        <button class="menu-item" data-tab="contact">Contact</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="panel active" id="home">
+  <section class="hero">
+    <h1 id="typewriter">Know Before You Drive There.<span class="cursor"></span></h1>
+    <p class="lede">See which chargers are actually free before you drive to one. No more pulling up to a full station and wondering what happened.</p>
+    <div class="hero-actions">
+      <a href="#" class="btn-primary">Get The App</a>
+      <button class="btn-ghost" onclick="document.getElementById('gallery').scrollIntoView({behavior:'smooth'})">See the app</button>
+    </div>
+  </section>
+
+  <section class="gallery-section" id="gallery">
+    <div class="gallery-strip">
+      <img src="website-assets/screenshot-map1.png" alt="QuickVolt map view" onclick="openLightbox(this.src)">
+      <img src="website-assets/screenshot-detail.png" alt="QuickVolt charger detail" onclick="openLightbox(this.src)">
+      <img src="website-assets/screenshot-radius.png" alt="QuickVolt search radius" onclick="openLightbox(this.src)">
+      <img src="website-assets/screenshot-reviews.png" alt="QuickVolt write a review" onclick="openLightbox(this.src)">
+      <img src="website-assets/screenshot-map2.png" alt="QuickVolt map view" onclick="openLightbox(this.src)">
+    </div>
+  </section>
+</div>
+
+<div class="panel" id="why">
+  <section class="content-section">
+    <div class="content-inner">
+      <h2>Why QuickVolt</h2>
+      <p>Most charger apps either only show you one network's own stations, or dump every charger on a map with no way to tell which ones you can actually use.</p>
+
+      <div class="why-point">
+        <div class="why-mark"></div>
+        <div>
+          <h3>Every Charger, One Map</h3>
+          <p>Apps built by a single network only show their own stations. QuickVolt pulls live status from Google's charger network instead, so ChargePoint, EVgo, Tesla, whatever's actually near you shows up.</p>
+        </div>
+      </div>
+      <div class="why-point">
+        <div class="why-mark"></div>
+        <div>
+          <h3>Built for Your Exact Car</h3>
+          <p>Pick your EV model once. QuickVolt only shows chargers with a connector that actually fits, so you're not finding out it's the wrong plug after you've already driven there.</p>
+        </div>
+      </div>
+      <div class="why-point">
+        <div class="why-mark"></div>
+        <div>
+          <h3>A Real Notification, Not a Guess</h3>
+          <p>Queue a full station and QuickVolt checks it in the background. The moment a port opens up, you get a push notification, even with the app closed.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="panel" id="about">
+  <section class="content-section">
+    <div class="content-inner">
+      <h2>About QuickVolt</h2>
+      <p>The idea came from a road trip to visit my grandmother two summers ago. I pulled into a charging station that showed up as open on the map I was using, only to find all four ports either occupied or broken, with no way to have known that before driving fifteen minutes out of my way. I sat in that parking lot for almost an hour waiting for a spot to open up, watching other drivers pull in and turn right back around. That was the moment I decided to build something that actually tells you the truth before you get there.</p>
+      <p>It's a solo project. I built the map, the live availability system, and the notification backend that watches queued chargers myself, under the name <strong>Hashir Butt</strong>.</p>
+      <p>It's free, and you don't need an account to search or browse. Sign up only if you want to save favorites or leave a review.</p>
+    </div>
+  </section>
+</div>
+
+<div class="panel" id="contact">
+  <section class="content-section">
+    <div class="content-inner">
+      <h2>Contact</h2>
+      <p>Questions, feedback, or found a bug? Reach out directly.</p>
+      <div class="contact-card">
+        <div class="contact-row">
+          <span class="contact-label">Email</span>
+          <a href="mailto:hashiributt@gmail.com" class="contact-value">hashiributt@gmail.com</a>
+        </div>
+        <div class="contact-row">
+          <span class="contact-label">Support</span>
+          <a href="https://hashiributt.github.io/quickvolt-support/" class="contact-value">Help Center</a>
+        </div>
+        <div class="contact-row">
+          <span class="contact-label">Privacy Policy</span>
+          <a href="https://hashiributt.github.io/quickvolt-support/privacy.html" class="contact-value">View Policy</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<footer>
+  <div class="wrap">
+    <div style="color: var(--text-light-muted); font-size: 14px;">&copy; 2026 QuickVolt</div>
+    <div class="footer-links">
+      <a href="https://hashiributt.github.io/quickvolt-support/">Support</a>
+      <a href="https://hashiributt.github.io/quickvolt-support/privacy.html">Privacy Policy</a>
+      <a href="mailto:hashiributt@gmail.com">Contact</a>
+    </div>
+  </div>
+</footer>
+
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+  <img id="lightbox-img" src="" alt="Screenshot">
+</div>
+
+<script>
+  const menuBtn = document.getElementById('menuBtn');
+  const menuDropdown = document.getElementById('menuDropdown');
+  const menuItems = document.querySelectorAll('.menu-item');
+  const panels = document.querySelectorAll('.panel');
+
+  function closeMenu() {
+    menuBtn.classList.remove('open');
+    menuBtn.setAttribute('aria-expanded', 'false');
+    menuDropdown.classList.remove('open');
+  }
+
+  menuBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isOpen = menuDropdown.classList.toggle('open');
+    menuBtn.classList.toggle('open', isOpen);
+    menuBtn.setAttribute('aria-expanded', String(isOpen));
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!menuDropdown.contains(e.target) && e.target !== menuBtn) closeMenu();
+  });
+
+  menuItems.forEach(btn => {
+    btn.addEventListener('click', () => {
+      menuItems.forEach(b => b.classList.remove('active'));
+      panels.forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.tab).classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      closeMenu();
+    });
+  });
+
+  const fullText = "Know Before You Drive There.";
+  const target = document.getElementById('typewriter');
+  const cursor = target.querySelector('.cursor');
+  // Clear the real (always-present) text, then type it back out for effect.
+  // If this script never runs, the real text set in the HTML stays visible --
+  // the hero headline should never depend on JS to have real content.
+  target.childNodes[0].textContent = '';
+  let i = 0;
+  function typeNext() {
+    if (i < fullText.length) {
+      cursor.insertAdjacentText('beforebegin', fullText[i]);
+      i++;
+      setTimeout(typeNext, 42);
+    }
+  }
+  setTimeout(typeNext, 300);
+
+  function openLightbox(src) {
+    document.getElementById('lightbox-img').src = src;
+    document.getElementById('lightbox').classList.add('open');
+  }
+  function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('open');
+  }
+</script>
+
+</body>
+</html>
