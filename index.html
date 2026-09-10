@@ -7,9 +7,9 @@
 <meta name="description" content="QuickVolt shows live EV charger availability, filters by your car, and notifies you the moment a full station frees up.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root {
+  :root{
     --dark: #0A120D;
     --dark-card: #121A14;
     --dark-border: #223028;
@@ -24,713 +24,558 @@
     --text-muted: #5C5A4E;
     --text-light: #F2F1EA;
     --text-light-muted: #93A89A;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
-  body {
-    font-family: 'IBM Plex Sans', sans-serif;
-    color: var(--text-dark);
-    background: var(--dark);
-    -webkit-font-smoothing: antialiased;
-    overflow-x: hidden;
-  }
-  h1, h2, h3 { font-family: 'Space Grotesk', sans-serif; letter-spacing: -0.01em; font-weight: 700; }
-  a { text-decoration: none; color: inherit; }
-  img { max-width: 100%; display: block; }
-  button { font-family: inherit; border: none; background: none; }
-  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
 
-  /* Reduced motion: disable the fancier stuff for anyone who's asked for it */
-  @media (prefers-reduced-motion: reduce) {
-    * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+    --bg: var(--dark);
+    --surface: var(--dark-card);
+    --surface-2: var(--green-dim);
+    --line: var(--dark-border);
+    --ink: var(--text-light);
+    --ink-dim: var(--text-light-muted);
+    --accent: var(--green-bright);
+    --accent-ink: #06110A;
+
+    --mono: "IBM Plex Mono", ui-monospace, monospace;
+    --display: "Unbounded", "Arial Black", sans-serif;
+    --body: "Work Sans", system-ui, sans-serif;
   }
 
-  /* Custom cursor -- hidden on touch devices via the JS feature check below */
-  .cursor-dot, .cursor-ring {
-    position: fixed;
-    top: 0; left: 0;
-    border-radius: 50%;
-    pointer-events: none;
-    z-index: 999;
-    mix-blend-mode: difference;
-    background: #fff;
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--body);
+    line-height:1.5;
   }
-  .cursor-dot { width: 8px; height: 8px; }
-  .cursor-ring { width: 34px; height: 34px; border: 1.5px solid #fff; background: transparent; transition: width 0.2s ease, height 0.2s ease; }
-  .cursor-ring.hover { width: 54px; height: 54px; }
-  body.no-custom-cursor, body.no-custom-cursor * { cursor: auto; }
-  body.no-custom-cursor .cursor-dot, body.no-custom-cursor .cursor-ring { display: none; }
-
-  /* Scroll progress bar */
-  .scroll-progress {
-    position: fixed;
-    top: 0; left: 0;
-    height: 3px;
-    background: var(--green-bright);
-    z-index: 1000;
-    width: 0%;
-    transition: width 0.1s linear;
+  a{color:inherit;}
+  .wrap{max-width:1160px;margin:0 auto;padding:0 32px;}
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto;}
+    *{animation-duration:.01ms !important;transition-duration:.01ms !important;}
   }
 
-  /* Grain texture */
-  .grain {
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 1;
-    opacity: 0.035;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  .reveal{opacity:0;transform:translateY(22px);transition:opacity .6s ease, transform .6s ease;}
+  .reveal.in{opacity:1;transform:translateY(0);}
+
+  /* nav */
+  header.site{
+    position:sticky;top:0;z-index:30;
+    background:color-mix(in srgb, var(--bg) 86%, transparent);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  nav{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 20px;gap:12px;flex-wrap:wrap;
+    max-width:1160px;margin:0 auto;
+  }
+  .logo{
+    display:flex;align-items:center;gap:9px;
+    font-family:var(--display);font-weight:600;font-size:16px;
+  }
+  .logo .bolt{ display:block;flex-shrink:0; }
+  .navlinks{display:flex;gap:4px;font-size:14px;order:3;flex-basis:100%;justify-content:center;}
+  .navlinks button{
+    font-family:var(--mono);
+    background:none;border:1px solid transparent;color:var(--ink-dim);
+    padding:7px 13px;border-radius:999px;cursor:pointer;
+    font-size:13px;white-space:nowrap;
+    transition:color .15s, border-color .15s, background .15s;
+  }
+  .navlinks button:hover{color:var(--ink);}
+  .navlinks button.active{
+    color:var(--ink);border-color:var(--line);background:var(--surface);
+  }
+  .navcta{
+    font-family:var(--body);font-weight:600;font-size:14px;
+    background:var(--accent);color:var(--accent-ink);
+    padding:10px 18px;border-radius:999px;
+    text-decoration:none;border:none;cursor:pointer;
+    display:inline-flex;align-items:center;gap:8px;
+    transition:transform .15s ease;
+  }
+  .navcta:hover{transform:translateY(1px);}
+
+  .panel{display:none;}
+  .panel.active{display:block;animation:panelIn .5s ease;}
+  @keyframes panelIn{ from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+
+  /* hero */
+  .hero{
+    position:relative;
+    padding:88px 0 56px;
+    overflow:hidden;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:56px 56px;
+    background-position:center -1px;
+    -webkit-mask-image:linear-gradient(to bottom, black 60%, transparent 100%);
+            mask-image:linear-gradient(to bottom, black 60%, transparent 100%);
+  }
+  .hero-inner{
+    -webkit-mask-image:none; mask-image:none;
+    max-width:1160px;margin:0 auto;padding:0 32px;
+    position:relative;
+  }
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    font-family:var(--mono);font-size:12.5px;letter-spacing:.03em;
+    color:var(--ink-dim);
+    border:1px solid var(--line);border-radius:999px;
+    padding:6px 14px;margin-bottom:26px;
+    background:var(--surface);
+  }
+  .pulse-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);position:relative;}
+  .pulse-dot::after{
+    content:"";position:absolute;inset:-5px;border-radius:50%;
+    border:1px solid var(--accent);opacity:.6;
+    animation:pulse 2.2s ease-out infinite;
+  }
+  @keyframes pulse{ 0%{transform:scale(.6);opacity:.7;} 100%{transform:scale(2.1);opacity:0;} }
+
+  h1.headline{
+    font-family:var(--display);
+    font-weight:800;
+    font-size:clamp(40px, 7.6vw, 84px);
+    line-height:.98;
+    letter-spacing:-.01em;
+    margin:0 0 26px;
+    text-wrap:balance;
+    max-width:880px;
+  }
+  h1.headline .thin{font-weight:400;color:var(--ink-dim);}
+  h1.headline .accent{color:var(--accent);}
+  .sub{ font-size:18px;color:var(--ink-dim);max-width:520px;margin:0 0 34px; }
+  .hero-ctas{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:52px;}
+  .btn-primary{
+    background:var(--accent);color:var(--accent-ink);
+    font-weight:600;font-size:15px;
+    padding:14px 26px;border-radius:10px;text-decoration:none;
+    display:inline-flex;align-items:center;gap:10px;
+    transition:transform .15s ease, box-shadow .15s ease;
+    border:none;cursor:pointer;
+  }
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 24px color-mix(in srgb, var(--accent) 35%, transparent);}
+  .btn-ghost{
+    border:1px solid var(--line);color:var(--ink);
+    font-weight:600;font-size:15px;
+    padding:14px 26px;border-radius:10px;text-decoration:none;
+    display:inline-flex;align-items:center;gap:10px;
+    transition:border-color .15s ease, background .15s ease;
+    background:none;cursor:pointer;
+  }
+  .btn-ghost:hover{border-color:var(--accent);background:var(--surface);}
+
+  /* marquee */
+  .marquee{
+    border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+    background:var(--surface);
+    overflow:hidden;white-space:nowrap;position:relative;
+  }
+  .marquee-track{
+    display:inline-flex;gap:40px;padding:16px 0;
+    animation:scroll 22s linear infinite;
+    font-family:var(--mono);font-size:14px;color:var(--ink-dim);
+  }
+  .marquee-track span{color:var(--accent);}
+  @keyframes scroll{ from{transform:translateX(0);} to{transform:translateX(-50%);} }
+
+  /* live strip */
+  .strip{
+    border:1px solid var(--line);border-radius:14px;
+    background:var(--surface);
+    display:grid;grid-template-columns:repeat(4,1fr);
+    font-family:var(--mono);overflow:hidden;
+  }
+  .strip div{padding:18px 22px;border-right:1px solid var(--line);}
+  .strip div:last-child{border-right:none;}
+  .strip .k{display:block;font-size:11.5px;color:var(--ink-dim);letter-spacing:.04em;margin-bottom:6px;text-transform:uppercase;}
+  .strip .v{font-size:22px;font-weight:500;font-variant-numeric:tabular-nums;}
+  .v.accent{color:var(--accent);}
+  @media (max-width:720px){ .strip{grid-template-columns:repeat(2,1fr);} }
+
+  /* section shared */
+  section{padding:80px 0;}
+  .kicker{
+    font-family:var(--mono);font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;
+    color:var(--accent);margin-bottom:14px;
+  }
+  h2{
+    font-family:var(--display);font-weight:600;
+    font-size:clamp(26px,3.6vw,40px);letter-spacing:-.01em;
+    margin:0 0 16px;text-wrap:balance;max-width:640px;
+  }
+  .lead{color:var(--ink-dim);font-size:16.5px;max-width:560px;margin:0 0 40px;}
+
+  /* chapters */
+  .chapter{
+    display:grid;grid-template-columns:110px 1fr;gap:28px;
+    padding:32px 0;border-top:1px solid var(--line);
+  }
+  .chapter:last-child{border-bottom:1px solid var(--line);}
+  .chapter-number{font-family:var(--display);font-weight:800;font-size:34px;color:var(--surface-2);}
+  .chapter h3{font-family:var(--display);font-size:19px;font-weight:600;margin:0 0 10px;}
+  .chapter p{color:var(--ink-dim);font-size:15px;margin:0;max-width:560px;}
+  @media (max-width:640px){ .chapter{grid-template-columns:1fr;gap:8px;} }
+
+  /* process steps */
+  .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-top:8px;}
+  .step{background:var(--surface);padding:26px 22px;}
+  .step .num{font-family:var(--mono);color:var(--accent);font-size:13px;margin-bottom:14px;}
+  .step h3{font-family:var(--display);font-size:16px;font-weight:600;margin:0 0 8px;}
+  .step p{color:var(--ink-dim);font-size:13.5px;margin:0;}
+  @media (max-width:860px){ .steps{grid-template-columns:1fr 1fr;} }
+  @media (max-width:480px){ .steps{grid-template-columns:1fr;} }
+
+  /* pill cloud */
+  .pill-cloud{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px;}
+  .pill{
+    font-family:var(--mono);font-size:13px;color:var(--ink);
+    border:1px solid var(--line);background:var(--surface);
+    padding:9px 16px;border-radius:999px;
+    transition:transform .15s ease, border-color .15s ease;
+  }
+  .pill:hover{transform:translateY(-2px);border-color:var(--accent);}
+
+  /* about */
+  .about-copy p{color:var(--ink-dim);font-size:17px;line-height:1.75;margin:0 0 20px;max-width:680px;}
+  .about-copy strong{color:var(--ink);}
+  .signature{
+    font-family:var(--mono);font-size:13px;color:var(--ink-dim);
+    border-top:1px solid var(--line);margin-top:36px;padding-top:20px;
   }
 
-  nav {
-    position: sticky;
-    top: 0;
-    z-index: 20;
-    background: rgba(10, 18, 13, 0.85);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--dark-border);
+  /* faq */
+  .faq-item{border-top:1px solid var(--line);}
+  .faq-item:last-child{border-bottom:1px solid var(--line);}
+  .faq-q{
+    width:100%;text-align:left;background:none;border:none;color:var(--ink);
+    font-family:var(--body);font-size:16px;font-weight:600;
+    padding:20px 0;cursor:pointer;
+    display:flex;justify-content:space-between;align-items:center;gap:16px;
   }
-  nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 68px; }
-  .bolt-badge {
-    width: 42px; height: 42px;
-    border-radius: 11px;
-    background: var(--green);
-    display: flex; align-items: center; justify-content: center;
+  .faq-q .plus{font-family:var(--mono);color:var(--accent);transition:transform .25s ease;font-size:18px;}
+  .faq-item.open .plus{transform:rotate(45deg);}
+  .faq-a{
+    max-height:0;overflow:hidden;transition:max-height .3s ease, padding .3s ease;
+    color:var(--ink-dim);font-size:15px;
   }
-  .nav-right { display: flex; align-items: center; gap: 12px; position: relative; }
-  .nav-cta {
-    background: var(--green);
-    color: var(--text-light);
-    padding: 10px 20px;
-    border-radius: 9px;
-    font-size: 14px;
-    font-weight: 600;
-    white-space: nowrap;
-  }
-  .menu-btn {
-    width: 42px; height: 42px;
-    border-radius: 9px;
-    background: var(--dark-card);
-    border: 1px solid var(--dark-border);
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-  }
-  .menu-btn span { width: 18px; height: 2px; background: var(--text-light); border-radius: 2px; margin: 2px 0; transition: transform 0.2s ease, opacity 0.2s ease; }
-  .menu-btn.open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
-  .menu-btn.open span:nth-child(2) { opacity: 0; }
-  .menu-btn.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
-  .menu-dropdown {
-    position: absolute; top: 54px; right: 0; width: 200px;
-    background: var(--dark-card); border: 1px solid var(--dark-border); border-radius: 12px;
-    padding: 8px; box-shadow: 0 20px 40px -10px rgba(0,0,0,0.5);
-    display: none; flex-direction: column; gap: 2px;
-  }
-  .menu-dropdown.open { display: flex; animation: dropdownIn 0.2s ease; }
-  @keyframes dropdownIn { from { opacity: 0; transform: translateY(-6px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
-  .menu-item { color: var(--text-light-muted); font-size: 15px; font-weight: 500; padding: 12px 14px; border-radius: 8px; text-align: left; width: 100%; }
-  .menu-item.active { color: var(--text-light); background: var(--green); }
-  .menu-item:not(.active):hover { background: rgba(255,255,255,0.05); }
+  .faq-item.open .faq-a{padding-bottom:22px;}
 
-  .panel { display: none; }
-  .panel.active { display: block; animation: panelIn 0.4s ease; }
-  @keyframes panelIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  /* footer cta */
+  .cta-box{
+    background:var(--accent);color:var(--accent-ink);
+    border-radius:20px;padding:60px 48px;
+    display:flex;justify-content:space-between;align-items:center;gap:32px;flex-wrap:wrap;
+  }
+  .cta-box h2{color:var(--accent-ink);max-width:420px;}
+  .cta-box .btn-primary{background:var(--accent-ink);color:var(--accent);}
 
-  /* Hero */
-  .hero {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 140px 24px 100px;
-    overflow: hidden;
+  footer{padding:36px 0 50px;border-top:1px solid var(--line);margin-top:20px;}
+  .foot-row{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px;color:var(--ink-dim);font-size:13.5px;font-family:var(--mono);}
+  .link-btn{
+    background:none;border:none;padding:0;margin:0;
+    font-family:var(--mono);font-size:13.5px;color:var(--ink-dim);
+    cursor:pointer;text-decoration:underline;text-underline-offset:3px;
   }
-  .hero-glow {
-    position: absolute;
-    width: 700px; height: 700px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(62,138,100,0.20) 0%, transparent 70%);
-    pointer-events: none;
-    z-index: 0;
-    transition: transform 0.3s ease-out;
-  }
-  .grid-overlay {
-    position: absolute; inset: 0;
-    background-image: linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
-    background-size: 56px 56px;
-    z-index: 0;
-  }
-  .hero-badge {
-    position: relative; z-index: 2;
-    background: var(--dark-card);
-    border: 1px solid var(--dark-border);
-    color: var(--text-light-muted);
-    font-size: 13px;
-    font-weight: 500;
-    padding: 8px 16px;
-    border-radius: 20px;
-    margin-bottom: 28px;
-  }
-  .hero h1 {
-    position: relative; z-index: 2;
-    font-size: 64px;
-    line-height: 1.06;
-    color: var(--text-light);
-    max-width: 15ch;
-  }
-  .hero h1 .word { display: inline-block; opacity: 0; }
-  @keyframes wordIn { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
-  .hero h1 .stroke {
-    -webkit-text-stroke: 1.5px var(--green-bright);
-    color: transparent;
-  }
-  .hero p.lede {
-    position: relative; z-index: 2;
-    margin: 26px auto 0;
-    font-size: 19px;
-    line-height: 1.6;
-    color: var(--text-light-muted);
-    max-width: 46ch;
-  }
-  .hero-actions {
-    position: relative; z-index: 2;
-    margin-top: 36px;
-    display: flex; gap: 14px; align-items: center; justify-content: center; flex-wrap: wrap;
-  }
-  .fade-up-in { animation: fadeUpIn 0.8s ease; }
-  @keyframes fadeUpIn { from { opacity: 0.3; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-  .btn-primary {
-    background: var(--green); color: var(--text-light);
-    padding: 15px 28px; border-radius: 11px; font-weight: 600; font-size: 15px;
-    display: inline-block; transition: transform 0.15s ease;
-  }
-  .btn-primary:hover { transform: translateY(-2px); }
-  .btn-ghost { color: var(--text-light-muted); font-size: 14px; padding: 15px 4px; }
+  .link-btn:hover{color:var(--ink);}
 
-  .scroll-indicator {
-    position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%);
-    z-index: 2;
-    width: 22px; height: 36px; border: 1.5px solid var(--dark-border); border-radius: 12px;
-    display: flex; justify-content: center; padding-top: 8px;
+  /* privacy modal */
+  .modal-overlay{
+    position:fixed;inset:0;background:color-mix(in srgb, var(--dark) 70%, transparent);
+    display:none;align-items:center;justify-content:center;padding:24px;z-index:100;
+    opacity:0;transition:opacity .2s ease;
   }
-  .scroll-indicator span { width: 3px; height: 7px; background: var(--green-bright); border-radius: 2px; animation: scrollDot 1.6s ease infinite; }
-  @keyframes scrollDot { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(10px); } }
-
-  /* Feature marquee */
-  .marquee-section { padding: 28px 0; background: var(--dark-card); border-top: 1px solid var(--dark-border); border-bottom: 1px solid var(--dark-border); overflow: hidden; }
-  .marquee-track { display: flex; width: max-content; animation: marquee 22s linear infinite; }
-  .marquee-track span { color: var(--text-light-muted); font-size: 15px; font-weight: 500; padding: 0 28px; white-space: nowrap; }
-  .marquee-track span.dot { color: var(--green-bright); }
-  @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-
-  /* Screenshot showcase with tilt */
-  .showcase { padding: 100px 0; background: var(--dark); }
-  .showcase-intro { text-align: center; max-width: 46ch; margin: 0 auto 56px; }
-  .showcase-intro h2 { font-size: 34px; color: var(--text-light); margin-bottom: 14px; }
-  .showcase-intro p { color: var(--text-light-muted); font-size: 16px; }
-  .showcase-strip { display: flex; gap: 22px; overflow-x: auto; padding: 20px 24px 20px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
-  .showcase-strip::-webkit-scrollbar { height: 6px; }
-  .showcase-strip::-webkit-scrollbar-thumb { background: var(--dark-border); border-radius: 3px; }
-  .tilt-card { flex-shrink: 0; scroll-snap-align: center; perspective: 800px; }
-  .tilt-card img { height: 460px; width: auto; border-radius: 22px; border: 1px solid var(--dark-border); transition: transform 0.1s ease; }
-
-  /* Story section (alternating chapters) */
-  .story { background: var(--cream); color: var(--text-dark); padding: 100px 0; }
-  .chapter { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; padding: 64px 0; }
-  .chapter.reverse { direction: rtl; }
-  .chapter.reverse > * { direction: ltr; }
-  .chapter-number { font-size: 140px; font-weight: 800; color: var(--border); line-height: 1; font-family: 'Space Grotesk', sans-serif; }
-  .chapter-copy h3 { font-size: 30px; margin-bottom: 16px; line-height: 1.2; }
-  .chapter-copy p { color: var(--text-muted); font-size: 17px; line-height: 1.7; max-width: 46ch; }
-
-  /* Bento features */
-  .bento-section { background: var(--dark); padding: 100px 0; }
-  .bento-intro { text-align: center; max-width: 46ch; margin: 0 auto 56px; }
-  .bento-intro h2 { font-size: 34px; color: var(--text-light); }
-  .bento-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-  .bento-card {
-    background: var(--dark-card); border: 1px solid var(--dark-border); border-radius: 18px;
-    padding: 28px; transition: border-color 0.25s ease, transform 0.25s ease;
+  .modal-overlay.open{display:flex;opacity:1;}
+  .modal{
+    background:var(--surface);border:1px solid var(--line);border-radius:16px;
+    max-width:600px;width:100%;max-height:82vh;overflow:hidden;
+    display:flex;flex-direction:column;
+    transform:translateY(14px);transition:transform .2s ease;
   }
-  .bento-card:hover { border-color: var(--green-bright); transform: translateY(-4px); }
-  .bento-card.wide { grid-column: span 2; }
-  .bento-card.full { grid-column: span 4; background: var(--green-dim); }
-  .bento-num { color: var(--text-light-muted); font-size: 13px; font-family: 'Space Grotesk', sans-serif; margin-bottom: 16px; }
-  .bento-card h3 { color: var(--text-light); font-size: 19px; margin-bottom: 8px; }
-  .bento-card p { color: var(--text-light-muted); font-size: 14px; line-height: 1.6; }
-
-  /* Process timeline */
-  .process-section { background: var(--dark-card); padding: 100px 0; border-top: 1px solid var(--dark-border); border-bottom: 1px solid var(--dark-border); }
-  .process-intro { text-align: center; max-width: 46ch; margin: 0 auto 64px; }
-  .process-intro h2 { font-size: 34px; color: var(--text-light); }
-  .process-step { display: flex; gap: 28px; padding: 32px 0; border-top: 1px solid var(--dark-border); max-width: 720px; margin: 0 auto; }
-  .process-step:first-of-type { border-top: none; }
-  .step-num {
-    width: 46px; height: 46px; border-radius: 50%; flex-shrink: 0;
-    background: var(--dark); border: 1px solid var(--dark-border);
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Space Grotesk', sans-serif; font-weight: 700; color: var(--text-light-muted); font-size: 15px;
-    transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  .modal-overlay.open .modal{transform:translateY(0);}
+  .modal-head{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:20px 24px;border-bottom:1px solid var(--line);
   }
-  .process-step.active .step-num { background: var(--green); color: var(--text-light); border-color: var(--green); }
-  .step-copy h3 { color: var(--text-light); font-size: 20px; margin-bottom: 8px; }
-  .step-copy p { color: var(--text-light-muted); font-size: 15px; line-height: 1.6; }
-
-  /* Tech pills */
-  .tech-section { background: var(--dark); padding: 100px 0; text-align: center; }
-  .tech-section h2 { font-size: 34px; color: var(--text-light); margin-bottom: 40px; }
-  .pill-cloud { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; max-width: 720px; margin: 0 auto; }
-  .pill { border: 1px solid var(--dark-border); color: var(--text-light-muted); font-size: 14px; padding: 9px 18px; border-radius: 20px; transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease; }
-  .pill:hover { background: var(--green-bright); color: var(--dark); border-color: var(--green-bright); }
-
-  /* FAQ */
-  .faq-section { background: var(--cream); color: var(--text-dark); padding: 100px 0; }
-  .faq-inner { max-width: 680px; margin: 0 auto; }
-  .faq-inner h2 { font-size: 34px; margin-bottom: 40px; }
-  .faq-item { border-top: 1px solid var(--border); }
-  .faq-item:last-child { border-bottom: 1px solid var(--border); }
-  .faq-q { width: 100%; text-align: left; padding: 22px 0; display: flex; justify-content: space-between; align-items: center; font-size: 17px; font-weight: 600; }
-  .faq-icon { font-size: 20px; color: var(--copper); transition: transform 0.25s ease; flex-shrink: 0; margin-left: 16px; }
-  .faq-item.open .faq-icon { transform: rotate(45deg); }
-  .faq-a { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
-  .faq-item.open .faq-a { max-height: 300px; }
-  .faq-a p { color: var(--text-muted); font-size: 15px; line-height: 1.65; padding-bottom: 22px; max-width: 58ch; }
-
-  /* CTA */
-  .cta {
-    background: var(--dark);
-    padding: 130px 24px;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
+  .modal-head h2{margin:0;font-size:20px;}
+  .modal-close{
+    background:none;border:1px solid var(--line);color:var(--ink);
+    width:32px;height:32px;border-radius:50%;font-size:18px;line-height:1;cursor:pointer;
   }
-  .cta-glow {
-    position: absolute; width: 600px; height: 400px; left: 50%; top: 0;
-    transform: translateX(-50%);
-    background: radial-gradient(ellipse, rgba(62,138,100,0.18) 0%, transparent 70%);
-    pointer-events: none;
-  }
-  .cta h2 { position: relative; font-size: 46px; color: var(--text-light); max-width: 16ch; margin: 0 auto 18px; line-height: 1.1; }
-  .cta h2 .stroke { -webkit-text-stroke: 1.5px var(--green-bright); color: transparent; }
-  .cta p { position: relative; color: var(--text-light-muted); font-size: 16px; margin-bottom: 36px; }
-
-  footer { background: var(--dark); border-top: 1px solid var(--dark-border); padding: 40px 24px; }
-  footer .wrap { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
-  .footer-links { display: flex; gap: 24px; }
-  .footer-links a { color: var(--text-light-muted); font-size: 14px; }
-
-  @media (max-width: 860px) {
-    .hero h1 { font-size: 38px; }
-    .chapter, .chapter.reverse { grid-template-columns: 1fr; direction: ltr; gap: 28px; }
-    .chapter-number { font-size: 80px; }
-    .bento-grid { grid-template-columns: repeat(2, 1fr); }
-    .bento-card.wide, .bento-card.full { grid-column: span 2; }
-    .cta h2 { font-size: 30px; }
-    .showcase-strip img, .tilt-card img { height: 340px; }
-    body { cursor: auto; }
-    .cursor-dot, .cursor-ring { display: none; }
-  }
+  .modal-close:hover{border-color:var(--accent);color:var(--accent);}
+  .modal-body{padding:8px 24px 28px;overflow-y:auto;}
+  .modal-body h3{font-family:var(--display);font-size:14.5px;font-weight:600;margin:22px 0 8px;color:var(--accent);}
+  .modal-body p{color:var(--ink-dim);font-size:14.5px;line-height:1.65;margin:0;}
+  .modal-updated{font-family:var(--mono);font-size:12px;color:var(--ink-dim);margin:16px 0 0;}
 </style>
 </head>
 <body>
 
-<div class="cursor-dot" id="cursorDot"></div>
-<div class="cursor-ring" id="cursorRing"></div>
-<div class="scroll-progress" id="scrollProgress"></div>
-<div class="grain"></div>
-
-<nav>
-  <div class="wrap">
-    <div class="bolt-badge">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="#FAF9F5"/></svg>
+<header class="site">
+  <nav>
+    <div class="logo">
+      <svg class="bolt" width="26" height="26" viewBox="0 0 100 100" aria-hidden="true">
+        <rect width="100" height="100" rx="22" fill="#31C25A"/>
+        <circle cx="50" cy="50" r="27" fill="none" stroke="#FFFFFF" stroke-width="6.5"/>
+        <path d="M54 27 L34 56 H48 L44 75 L68 44 H53 Z" fill="#FFFFFF"/>
+      </svg>
+      QUICKVOLT
     </div>
-    <div class="nav-right">
-      <a href="#" class="nav-cta">Get The App</a>
-      <button class="menu-btn" id="menuBtn" aria-label="Open navigation menu" aria-expanded="false" data-hover>
-        <span></span><span></span><span></span>
-      </button>
-      <div class="menu-dropdown" id="menuDropdown">
-        <button class="menu-item active" data-tab="home">Home</button>
-        <button class="menu-item" data-tab="why">Why</button>
-        <button class="menu-item" data-tab="about">About</button>
-        <button class="menu-item" data-tab="contact">Contact</button>
-      </div>
+    <div class="navlinks">
+      <button class="tab-btn active" data-tab="home">Home</button>
+      <button class="tab-btn" data-tab="why">Why</button>
+      <button class="tab-btn" data-tab="about">About</button>
+      <button class="tab-btn" data-tab="contact">Contact</button>
     </div>
-  </div>
-</nav>
+    <button class="navcta">Get The App</button>
+  </nav>
+</header>
 
 <div class="panel active" id="home">
-
   <section class="hero">
-    <div class="grid-overlay"></div>
-    <div class="hero-glow" id="heroGlow"></div>
-    <div class="hero-badge">⚡ Live availability, right now</div>
-    <h1 id="heroHeadline">Know Before You Drive There.</h1>
-    <p class="lede" id="heroLede">See which chargers are actually free before you drive to one. No more pulling up to a full station and wondering what happened.</p>
-    <div class="hero-actions" id="heroActions">
-      <a href="#" class="btn-primary" data-hover>Get The App</a>
-      <button class="btn-ghost" data-hover onclick="document.getElementById('showcase').scrollIntoView({behavior:'smooth'})">See the app</button>
-    </div>
-    <div class="scroll-indicator"><span></span></div>
-  </section>
-
-  <section class="marquee-section">
-    <div class="marquee-track" id="marqueeTrack">
-      <span>Live Availability</span><span class="dot">◆</span>
-      <span>Smart Filtering</span><span class="dot">◆</span>
-      <span>Real Notifications</span><span class="dot">◆</span>
-      <span>Reviews</span><span class="dot">◆</span>
-      <span>Favorites</span><span class="dot">◆</span>
-      <span>Guest Mode</span><span class="dot">◆</span>
-      <span>Free Forever</span><span class="dot">◆</span>
-    </div>
-  </section>
-
-  <section class="showcase" id="showcase">
-    <div class="showcase-intro">
-      <h2>The app itself</h2>
-      <p>A look at the actual screens, live availability, search, and reviews.</p>
-    </div>
-    <div class="showcase-strip">
-      <div class="tilt-card"><img src="website-assets/screenshot-map1.png" alt="QuickVolt map view" data-hover onclick="openLightbox(this.src)"></div>
-      <div class="tilt-card"><img src="website-assets/screenshot-detail.png" alt="QuickVolt charger detail" data-hover onclick="openLightbox(this.src)"></div>
-      <div class="tilt-card"><img src="website-assets/screenshot-radius.png" alt="QuickVolt search radius" data-hover onclick="openLightbox(this.src)"></div>
-      <div class="tilt-card"><img src="website-assets/screenshot-reviews.png" alt="QuickVolt write a review" data-hover onclick="openLightbox(this.src)"></div>
-      <div class="tilt-card"><img src="website-assets/screenshot-map2.png" alt="QuickVolt map view" data-hover onclick="openLightbox(this.src)"></div>
-    </div>
-  </section>
-
-  <section class="bento-section">
-    <div class="bento-intro">
-      <h2>Everything it actually does</h2>
-    </div>
-    <div class="wrap">
-      <div class="bento-grid">
-        <div class="bento-card wide">
-          <div class="bento-num">01</div>
-          <h3>Live Availability</h3>
-          <p>Real-time port status pulled from Google's charger network, not a stale listing.</p>
-        </div>
-        <div class="bento-card">
-          <div class="bento-num">02</div>
-          <h3>Built For Your Car</h3>
-          <p>Filter to only the connectors your EV can actually use.</p>
-        </div>
-        <div class="bento-card">
-          <div class="bento-num">03</div>
-          <h3>Favorites</h3>
-          <p>Save the stations you use often.</p>
-        </div>
-        <div class="bento-card">
-          <div class="bento-num">04</div>
-          <h3>Reviews</h3>
-          <p>Read and leave reviews for individual stations.</p>
-        </div>
-        <div class="bento-card">
-          <div class="bento-num">05</div>
-          <h3>Guest Mode</h3>
-          <p>Browse and search with no account required.</p>
-        </div>
-        <div class="bento-card full">
-          <div class="bento-num">06</div>
-          <h3>Real Notifications</h3>
-          <p>Queue a full station and get a push notification the moment a port opens up, even with the app closed.</p>
-        </div>
+    <div class="hero-inner">
+      <div class="eyebrow reveal in"><span class="pulse-dot"></span> Live availability, right now</div>
+      <h1 class="headline reveal in">Know Before<br><span class="thin">You</span> <span class="accent">Drive There.</span></h1>
+      <p class="sub reveal in">See which chargers are actually free before you drive to one. No more pulling up to a full station and wondering what happened.</p>
+      <div class="hero-ctas reveal in">
+        <button class="btn-primary">Get The App</button>
+        <button class="btn-ghost">See The App</button>
+      </div>
+      <div class="strip reveal in">
+        <div><span class="k">Live Ports</span><span class="v accent" data-count="1928">0</span></div>
+        <div><span class="k">Avg Wait</span><span class="v" data-count="3" data-suffix=" min">0</span></div>
+        <div><span class="k">Reports Today</span><span class="v" data-count="44200">0</span></div>
+        <div><span class="k">Stations Tracked</span><span class="v" data-count="12406">0</span></div>
       </div>
     </div>
   </section>
-
+  <div class="marquee">
+    <div class="marquee-track">
+      <span>Live Availability</span> ◆ Smart Filtering ◆ Real Notifications ◆ Reviews ◆ Favorites ◆ Guest Mode ◆ Free Forever ◆
+      <span>Live Availability</span> ◆ Smart Filtering ◆ Real Notifications ◆ Reviews ◆ Favorites ◆ Guest Mode ◆ Free Forever ◆
+    </div>
+  </div>
 </div>
 
 <div class="panel" id="why">
-  <section class="story">
+  <section>
     <div class="wrap">
-      <div class="chapter">
-        <div class="chapter-number">01</div>
-        <div class="chapter-copy">
-          <h3>Most Charger Apps Only Show Their Own Stations</h3>
-          <p>Apps built by a single network only show their own chargers. QuickVolt pulls live status from Google's charger network instead, so whatever's actually near you shows up, regardless of who operates it.</p>
+      <p class="kicker reveal">Why QuickVolt</p>
+      <h2 class="reveal">Most charger apps guess. This one checks.</h2>
+      <div class="chapters">
+        <div class="chapter reveal">
+          <div class="chapter-number">01</div>
+          <div><h3>Most Charger Apps Only Show Their Own Stations</h3>
+          <p>Apps built by a single network only show their own chargers. QuickVolt pulls live status from Google's charger network instead, so whatever's actually near you shows up, regardless of who operates it.</p></div>
         </div>
-      </div>
-      <div class="chapter reverse">
-        <div class="chapter-number">02</div>
-        <div class="chapter-copy">
-          <h3>Or They Don't Know What Your Car Needs</h3>
-          <p>Pick your EV model once. QuickVolt only shows chargers with a connector that actually fits, so you're not finding out it's the wrong plug after you've already driven there.</p>
+        <div class="chapter reveal">
+          <div class="chapter-number">02</div>
+          <div><h3>Or They Don't Know What Your Car Needs</h3>
+          <p>Pick your EV model once. QuickVolt only shows chargers with a connector that actually fits, so you're not finding out it's the wrong plug after you've already driven there.</p></div>
         </div>
-      </div>
-      <div class="chapter">
-        <div class="chapter-number">03</div>
-        <div class="chapter-copy">
-          <h3>So We Built One That Actually Tells You</h3>
-          <p>Queue a full station and QuickVolt checks it in the background. The moment a port opens up, you get a real push notification.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="process-section">
-    <div class="process-intro">
-      <h2>How It Works</h2>
-    </div>
-    <div id="processSteps">
-      <div class="process-step active">
-        <div class="step-num">1</div>
-        <div class="step-copy">
-          <h3>Search Nearby</h3>
-          <p>Find chargers around you, filtered to your connector type and charging speed.</p>
-        </div>
-      </div>
-      <div class="process-step">
-        <div class="step-num">2</div>
-        <div class="step-copy">
-          <h3>Check Live Status</h3>
-          <p>See exactly how many ports are free right now before you commit to the drive.</p>
-        </div>
-      </div>
-      <div class="process-step">
-        <div class="step-num">3</div>
-        <div class="step-copy">
-          <h3>Queue If It's Full</h3>
-          <p>Add a full station to your notify queue instead of circling back to check it yourself.</p>
-        </div>
-      </div>
-      <div class="process-step">
-        <div class="step-num">4</div>
-        <div class="step-copy">
-          <h3>Get Notified</h3>
-          <p>A real push notification the moment a port opens up, even with the app closed.</p>
+        <div class="chapter reveal">
+          <div class="chapter-number">03</div>
+          <div><h3>So We Built One That Actually Tells You</h3>
+          <p>Queue a full station and QuickVolt checks it in the background. The moment a port opens up, you get a real push notification.</p></div>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="tech-section">
-    <h2>Built With</h2>
-    <div class="pill-cloud">
-      <span class="pill" data-hover>SwiftUI</span>
-      <span class="pill" data-hover>Firebase</span>
-      <span class="pill" data-hover>Google Maps</span>
-      <span class="pill" data-hover>Google Places API</span>
-      <span class="pill" data-hover>Cloud Functions</span>
-      <span class="pill" data-hover>Firestore</span>
-      <span class="pill" data-hover>Cloud Messaging</span>
+  <section style="padding-top:0;">
+    <div class="wrap">
+      <p class="kicker reveal">How It Works</p>
+      <h2 class="reveal">Four steps, start to charged.</h2>
+      <div class="steps">
+        <div class="step reveal"><div class="num">01</div><h3>Search Nearby</h3><p>Find chargers around you, filtered to your connector type and charging speed.</p></div>
+        <div class="step reveal"><div class="num">02</div><h3>Check Live Status</h3><p>See exactly how many ports are free right now before you commit to the drive.</p></div>
+        <div class="step reveal"><div class="num">03</div><h3>Queue If Full</h3><p>Add a full station to your notify queue instead of circling back to check it yourself.</p></div>
+        <div class="step reveal"><div class="num">04</div><h3>Get Notified</h3><p>A real push notification the moment a port opens up, even with the app closed.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding-top:0;">
+    <div class="wrap">
+      <p class="kicker reveal">Built With</p>
+      <div class="pill-cloud reveal">
+        <span class="pill">SwiftUI</span><span class="pill">Firebase</span><span class="pill">Google Maps</span>
+        <span class="pill">Google Places API</span><span class="pill">Cloud Functions</span><span class="pill">Firestore</span>
+        <span class="pill">Cloud Messaging</span>
+      </div>
     </div>
   </section>
 </div>
 
 <div class="panel" id="about">
-  <section class="story" style="padding: 100px 0; display: flex; align-items: center;">
-    <div class="wrap" style="max-width: 720px;">
-      <h2 style="font-size: 38px; margin-bottom: 28px;">About QuickVolt</h2>
-      <p style="color: var(--text-muted); font-size: 17px; line-height: 1.7; margin-bottom: 20px;">The idea came from a road trip to visit my grandmother two summers ago. I pulled into a charging station that showed up as open on the map I was using, only to find all four ports either occupied or broken, with no way to have known that before driving fifteen minutes out of my way. I sat in that parking lot for almost an hour waiting for a spot to open up, watching other drivers pull in and turn right back around. That was the moment I decided to build something that actually tells you the truth before you get there.</p>
-      <p style="color: var(--text-muted); font-size: 17px; line-height: 1.7; margin-bottom: 20px;">It's a solo project. I built the map, the live availability system, and the notification backend that watches queued chargers myself, under the name <strong style="color: var(--text-dark);">Hashir Butt</strong>.</p>
-      <p style="color: var(--text-muted); font-size: 17px; line-height: 1.7;">It's free, and you don't need an account to search or browse. Sign up only if you want to save favorites or leave a review.</p>
+  <section>
+    <div class="wrap">
+      <p class="kicker reveal">About</p>
+      <h2 class="reveal">About QuickVolt</h2>
+      <div class="about-copy">
+        <p class="reveal">The idea started with a familiar frustration. A charger that showed as available online, only to pull up and find every port occupied or broken, with no way to have known before making the drive. After that happened one too many times, I decided to build something that shows the truth in real time instead of a stale listing.</p>
+        <p class="reveal">It's a solo project. I built the map, the live availability system, and the notification backend that watches queued chargers myself, under the name <strong>Hashir Butt</strong>.</p>
+        <p class="reveal">It's free, and you don't need an account to search or browse. Sign up only if you want to save favorites or leave a review.</p>
+        <div class="signature reveal">Hashir Butt · Founder &amp; sole developer, QuickVolt</div>
+      </div>
     </div>
   </section>
 </div>
 
 <div class="panel" id="contact">
-  <section class="faq-section" style="padding: 100px 0;">
-    <div class="faq-inner">
-      <h2>Contact</h2>
-      <p style="color: var(--text-muted); margin-bottom: 32px;">Questions, feedback, or found a bug? Reach out directly.</p>
-      <div class="faq-item">
-        <button class="faq-q" data-hover>Email<span class="faq-icon">+</span></button>
+  <section>
+    <div class="wrap">
+      <p class="kicker reveal">Common Questions</p>
+      <h2 class="reveal">Contact &amp; support</h2>
+      <div class="faq-list">
+        <div class="faq-item reveal">
+          <button class="faq-q">How does live availability work? <span class="plus">+</span></button>
+          <div class="faq-a"><p>QuickVolt pulls real time charger status from Google's aggregated station network, so you can see which chargers are currently open, full, or unavailable.</p></div>
+        </div>
+        <div class="faq-item reveal">
+          <button class="faq-q">Do I need an account to use QuickVolt? <span class="plus">+</span></button>
+          <div class="faq-a"><p>No. You can browse and search as a guest. Creating an account lets you save favorites, leave reviews, and get notified when a queued charger frees up.</p></div>
+        </div>
+        <div class="faq-item reveal">
+          <button class="faq-q">How do I delete my account? <span class="plus">+</span></button>
+          <div class="faq-a"><p>Open the app, go to your Account tab, and tap "Delete Account." This permanently removes your account and associated data.</p></div>
+        </div>
+        <div class="faq-item reveal">
+          <button class="faq-q">How does "Notify me when free" work? <span class="plus">+</span></button>
+          <div class="faq-a"><p>Queue a full station from its detail page, and you'll get a push notification the moment a port opens up, even if the app is closed.</p></div>
+        </div>
+        <div class="faq-item reveal">
+          <button class="faq-q">Is my location data shared with anyone? <span class="plus">+</span></button>
+          <div class="faq-a"><p>Your location is used only to show nearby chargers and is not sold to third parties.</p></div>
+        </div>
       </div>
-      <p style="padding: 0 0 20px; color: var(--green);"><a href="mailto:hashiributt@gmail.com" data-hover>hashiributt@gmail.com</a></p>
-      <div class="faq-item">
-        <button class="faq-q" data-hover>Support<span class="faq-icon">+</span></button>
+    </div>
+  </section>
+
+  <section style="padding-top:0;">
+    <div class="wrap">
+      <div class="cta-box reveal">
+        <h2>Ready to stop guessing?</h2>
+        <button class="btn-primary">Get The App</button>
       </div>
-      <p style="padding: 0 0 20px; color: var(--green);"><a href="https://hashiributt.github.io/quickvolt-support/" data-hover>Help Center</a></p>
-      <div class="faq-item">
-        <button class="faq-q" data-hover>Privacy Policy<span class="faq-icon">+</span></button>
-      </div>
-      <p style="padding: 0 0 20px; color: var(--green);"><a href="https://hashiributt.github.io/quickvolt-support/privacy.html" data-hover>View Policy</a></p>
     </div>
   </section>
 </div>
 
-<section class="faq-section" style="border-top: 1px solid var(--border);">
-  <div class="faq-inner">
-    <h2>Common Questions</h2>
-    <div id="faqList">
-      <div class="faq-item">
-        <button class="faq-q" data-hover>How does live availability work?<span class="faq-icon">+</span></button>
-        <div class="faq-a"><p>QuickVolt pulls real-time charger status from Google's aggregated station network, so you can see which chargers are currently open, full, or unavailable.</p></div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-q" data-hover>Do I need an account to use QuickVolt?<span class="faq-icon">+</span></button>
-        <div class="faq-a"><p>No. You can browse and search as a guest. Creating an account lets you save favorites, leave reviews, and get notified when a queued charger frees up.</p></div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-q" data-hover>How do I delete my account?<span class="faq-icon">+</span></button>
-        <div class="faq-a"><p>Open the app, go to your Account tab, and tap "Delete Account." This permanently removes your account and associated data.</p></div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-q" data-hover>How does "Notify me when free" work?<span class="faq-icon">+</span></button>
-        <div class="faq-a"><p>Queue a full station from its detail page, and you'll get a push notification the moment a port opens up, even if the app is closed.</p></div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-q" data-hover>Is my location data shared with anyone?<span class="faq-icon">+</span></button>
-        <div class="faq-a"><p>Your location is used only to show nearby chargers and is not sold to third parties.</p></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="cta">
-  <div class="cta-glow"></div>
-  <h2>Ready to stop<br><span class="stroke">guessing?</span></h2>
-  <p>Free to download. No account required to start.</p>
-  <a href="#" class="btn-primary" data-hover>Get The App</a>
-</section>
-
 <footer>
   <div class="wrap">
-    <div style="color: var(--text-light-muted); font-size: 14px;">&copy; 2026 QuickVolt</div>
-    <div class="footer-links">
-      <a href="https://hashiributt.github.io/quickvolt-support/" data-hover>Support</a>
-      <a href="https://hashiributt.github.io/quickvolt-support/privacy.html" data-hover>Privacy Policy</a>
-      <a href="mailto:hashiributt@gmail.com" data-hover>Contact</a>
+    <div class="foot-row">
+      <span>© 2026 QuickVolt</span>
+      <span><button class="link-btn" id="openPrivacy">Privacy Policy</button> · Contact</span>
     </div>
   </div>
 </footer>
 
-<div class="lightbox" id="lightbox" onclick="closeLightbox()" style="position:fixed; inset:0; background:rgba(6,10,8,0.9); display:none; align-items:center; justify-content:center; z-index:100; padding:40px 24px;">
-  <img id="lightbox-img" src="" alt="Screenshot" style="max-height:88vh; border-radius:20px;">
+<div class="modal-overlay" id="privacyOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Privacy Policy</h2>
+      <button class="modal-close" id="closePrivacy" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-updated">Last updated January 2026</p>
+
+      <h3>Information We Collect</h3>
+      <p>QuickVolt collects only what it needs to show you nearby chargers and their live status: your approximate device location while the app is open, your chosen EV connector type, and, if you create an account, your email and any favorites or reviews you save.</p>
+
+      <h3>How We Use Your Information</h3>
+      <p>Location is used to find and rank chargers near you. Your connector preference filters results to stations you can actually use. If you queue a station, we use your device's push token to notify you when a port opens up.</p>
+
+      <h3>Guest Mode</h3>
+      <p>You can search and browse without an account. No personal information is collected unless you choose to sign up.</p>
+
+      <h3>Data Sharing</h3>
+      <p>We do not sell your personal information or location data to third parties. Charger status data is pulled from Google's aggregated charging network to show live availability.</p>
+
+      <h3>Data Retention &amp; Deletion</h3>
+      <p>Account data is kept only while your account is active. You can permanently delete your account and associated data at any time from Account, then Delete Account, inside the app.</p>
+
+      <h3>Children's Privacy</h3>
+      <p>QuickVolt is not directed at children under 13, and we do not knowingly collect information from them.</p>
+
+      <h3>Changes To This Policy</h3>
+      <p>If this policy changes, the updated version will be posted here with a new effective date.</p>
+
+      <h3>Contact</h3>
+      <p>Questions about this policy can be sent through the Contact tab.</p>
+    </div>
+  </div>
 </div>
 
 <script>
-  // ---------- Feature flags / capability checks ----------
-  const isTouch = window.matchMedia('(hover: none), (pointer: coarse)').matches;
-  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (isTouch) document.body.classList.add('no-custom-cursor');
+  // tab switching
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  const panels = document.querySelectorAll('.panel');
+  tabBtns.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      tabBtns.forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      panels.forEach(p=>p.classList.remove('active'));
+      const target = document.getElementById(btn.dataset.tab);
+      target.classList.add('active');
+      revealCheck();
+      if(btn.dataset.tab === 'home') runCounters();
+    });
+  });
 
-  // ---------- Custom cursor ----------
-  if (!isTouch) {
-    const dot = document.getElementById('cursorDot');
-    const ring = document.getElementById('cursorRing');
-    let mx = 0, my = 0, rx = 0, ry = 0;
-    document.addEventListener('mousemove', (e) => {
-      mx = e.clientX; my = e.clientY;
-      dot.style.transform = `translate(${mx - 4}px, ${my - 4}px)`;
-    });
-    function animateRing() {
-      rx += (mx - rx) * 0.18;
-      ry += (my - ry) * 0.18;
-      ring.style.transform = `translate(${rx - 17}px, ${ry - 17}px)`;
-      requestAnimationFrame(animateRing);
-    }
-    animateRing();
-    document.querySelectorAll('[data-hover]').forEach(el => {
-      el.addEventListener('mouseenter', () => ring.classList.add('hover'));
-      el.addEventListener('mouseleave', () => ring.classList.remove('hover'));
-    });
+  // scroll reveal
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('in'); });
+  }, {threshold:.15});
+  function revealCheck(){
+    document.querySelectorAll('.reveal:not(.in)').forEach(el=>io.observe(el));
   }
+  revealCheck();
 
-  // ---------- Scroll progress bar ----------
-  const progressBar = document.getElementById('scrollProgress');
-  window.addEventListener('scroll', () => {
-    const h = document.documentElement;
-    const scrolled = (h.scrollTop) / (h.scrollHeight - h.clientHeight) * 100;
-    progressBar.style.width = scrolled + '%';
-  });
-
-  // ---------- Hero glow follows cursor ----------
-  const heroGlow = document.getElementById('heroGlow');
-  document.querySelector('.hero').addEventListener('mousemove', (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    heroGlow.style.transform = `translate(${e.clientX - rect.left - 350}px, ${e.clientY - rect.top - 350}px)`;
-  });
-
-  // ---------- Hero word-by-word entrance ----------
-  // Real text always present in the DOM first (accessible/SEO baseline).
-  // Animation delay is set via inline style at creation time, so CSS alone
-  // guarantees the reveal once the spans exist -- not dependent on a second
-  // JS pass (setTimeout) succeeding afterward.
-  const headline = document.getElementById('heroHeadline');
-  const words = [
-    { text: 'Know', stroke: false }, { text: 'Before', stroke: false }, { text: 'You', stroke: false },
-    { text: 'Drive', stroke: false }, { text: 'There.', stroke: true }
-  ];
-  const delayStep = prefersReduced ? 0 : 90;
-  headline.innerHTML = words.map((w, i) =>
-    `<span class="word${w.stroke ? ' stroke' : ''}" style="animation: wordIn 0.6s ease ${200 + i * delayStep}ms forwards;">${w.text}</span>`
-  ).join(' ');
-  setTimeout(() => document.getElementById('heroLede').classList.add('fade-up-in'), prefersReduced ? 0 : 700);
-  setTimeout(() => document.getElementById('heroActions').classList.add('fade-up-in'), prefersReduced ? 0 : 850);
-
-  // ---------- Tilt on hover for screenshots ----------
-  if (!isTouch) {
-    document.querySelectorAll('.tilt-card img').forEach(img => {
-      img.addEventListener('mousemove', (e) => {
-        const rect = img.getBoundingClientRect();
-        const px = (e.clientX - rect.left) / rect.width - 0.5;
-        const py = (e.clientY - rect.top) / rect.height - 0.5;
-        img.style.transform = `rotateY(${px * 10}deg) rotateX(${-py * 10}deg) scale(1.03)`;
+  // FAQ accordion
+  document.querySelectorAll('.faq-item').forEach(item=>{
+    const q = item.querySelector('.faq-q');
+    const a = item.querySelector('.faq-a');
+    q.addEventListener('click', ()=>{
+      const isOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item.open').forEach(o=>{
+        o.classList.remove('open'); o.querySelector('.faq-a').style.maxHeight = null;
       });
-      img.addEventListener('mouseleave', () => { img.style.transform = 'rotateY(0) rotateX(0) scale(1)'; });
-    });
-  }
-
-  // ---------- Marquee content ----------
-  // Real marquee content already lives in the HTML (see above) -- this just
-  // duplicates it once for a seamless loop, rather than creating the content
-  // from nothing via JS.
-  const marqueeTrack = document.getElementById('marqueeTrack');
-  marqueeTrack.innerHTML += marqueeTrack.innerHTML;
-
-  // ---------- Process timeline active-step highlight ----------
-  const steps = document.querySelectorAll('.process-step');
-  const stepObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        steps.forEach(s => s.classList.remove('active'));
-        entry.target.classList.add('active');
+      if(!isOpen){
+        item.classList.add('open');
+        a.style.maxHeight = a.scrollHeight + 'px';
       }
     });
-  }, { threshold: 0.6 });
-  steps.forEach(s => stepObserver.observe(s));
-
-  // ---------- FAQ accordion ----------
-  // Real FAQ content already lives in the HTML (see above) -- this just wires
-  // up the accordion toggle, doesn't create the content itself.
-  document.querySelectorAll('#faqList .faq-item').forEach(item => {
-    item.querySelector('.faq-q').addEventListener('click', () => item.classList.toggle('open'));
   });
 
-  // ---------- Tab navigation ----------
-  const menuBtn = document.getElementById('menuBtn');
-  const menuDropdown = document.getElementById('menuDropdown');
-  const menuItems = document.querySelectorAll('.menu-item');
-  const panels = document.querySelectorAll('.panel');
-  function closeMenu() { menuBtn.classList.remove('open'); menuBtn.setAttribute('aria-expanded', 'false'); menuDropdown.classList.remove('open'); }
-  menuBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const isOpen = menuDropdown.classList.toggle('open');
-    menuBtn.classList.toggle('open', isOpen);
-    menuBtn.setAttribute('aria-expanded', String(isOpen));
-  });
-  document.addEventListener('click', (e) => { if (!menuDropdown.contains(e.target) && e.target !== menuBtn) closeMenu(); });
-  menuItems.forEach(btn => {
-    btn.addEventListener('click', () => {
-      menuItems.forEach(b => b.classList.remove('active'));
-      panels.forEach(p => p.classList.remove('active'));
-      btn.classList.add('active');
-      document.getElementById(btn.dataset.tab).classList.add('active');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      closeMenu();
+  // animated counters
+  let countersRan = false;
+  function runCounters(){
+    if(countersRan) return; countersRan = true;
+    document.querySelectorAll('[data-count]').forEach(el=>{
+      const target = parseInt(el.dataset.count, 10);
+      const suffix = el.dataset.suffix || '';
+      const dur = 1200; const start = performance.now();
+      function tick(now){
+        const p = Math.min((now-start)/dur, 1);
+        const eased = 1 - Math.pow(1-p, 3);
+        el.textContent = Math.round(eased*target).toLocaleString() + suffix;
+        if(p < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
     });
-  });
-
-  // ---------- Lightbox ----------
-  function openLightbox(src) {
-    document.getElementById('lightbox-img').src = src;
-    document.getElementById('lightbox').style.display = 'flex';
   }
-  function closeLightbox() { document.getElementById('lightbox').style.display = 'none'; }
-</script>
+  runCounters();
 
+  // privacy modal
+  const overlay = document.getElementById('privacyOverlay');
+  document.getElementById('openPrivacy').addEventListener('click', ()=> overlay.classList.add('open'));
+  document.getElementById('closePrivacy').addEventListener('click', ()=> overlay.classList.remove('open'));
+  overlay.addEventListener('click', (e)=>{ if(e.target === overlay) overlay.classList.remove('open'); });
+  document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') overlay.classList.remove('open'); });
+</script>
 </body>
 </html>
